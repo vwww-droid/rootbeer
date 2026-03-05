@@ -82,6 +82,7 @@ final class Const {
             "/system/sd/xbin/",
             "/system/usr/we-need-root/",
             "/system/xbin/",
+            "/system_ext/bin/",
             "/cache/",
             "/data/",
             "/dev/"
