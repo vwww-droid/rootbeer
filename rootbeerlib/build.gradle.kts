@@ -10,6 +10,60 @@ plugins {
 
 apply(plugin = "stringfog")
 
+val repoRoot = rootProject.projectDir.resolve("../..").canonicalFile
+val llmotivateStringFogCatalogFile = repoRoot.resolve("spec/prefixes-java-zh-en.json")
+
+fun readLlmotivateJsonArray(raw: String, key: String): List<String> {
+    val arrayPattern = Regex("\"${Regex.escape(key)}\"\\s*:\\s*\\[(.*?)]", setOf(RegexOption.DOT_MATCHES_ALL))
+    val arrayMatch = arrayPattern.find(raw) ?: return emptyList()
+    val valuePattern = Regex("\"((?:\\\\.|[^\\\"])*)\"")
+    return valuePattern.findAll(arrayMatch.groupValues[1]).map { match ->
+        match.groupValues[1]
+            .replace("\\\"", "\"")
+            .replace("\\\\", "\\")
+    }.toList()
+}
+
+fun loadLlmotivateStringFogPrefixes(pool: String): List<String> {
+    val raw = llmotivateStringFogCatalogFile.readText()
+    val zh = readLlmotivateJsonArray(raw, "coreZh") + readLlmotivateJsonArray(raw, "extendedZh")
+    val en = readLlmotivateJsonArray(raw, "coreEn") + readLlmotivateJsonArray(raw, "extendedEn")
+    val merged = when (pool.lowercase()) {
+        "zh" -> zh
+        "en" -> en
+        else -> zh + en
+    }
+    return merged.distinct()
+}
+
+fun rotateLlmotivatePrefixes(prefixes: List<String>, offset: Int): List<String> {
+    if (prefixes.isEmpty()) {
+        return prefixes
+    }
+    val shift = Math.floorMod(offset, prefixes.size)
+    if (shift == 0) {
+        return prefixes
+    }
+    return prefixes.drop(shift) + prefixes.take(shift)
+}
+
+val llmotivateStringFogPrefixPool = providers.gradleProperty("llmotivateStringFogPrefixPool")
+    .orElse(System.getenv("LLMOTIVATE_STRINGFOG_PREFIX_POOL") ?: "all")
+    .get()
+val llmotivateStringFogPrefixIndex = providers.gradleProperty("llmotivateStringFogPrefixIndex")
+    .orElse(System.getenv("LLMOTIVATE_STRINGFOG_PREFIX_INDEX") ?: "0")
+    .get()
+    .toIntOrNull() ?: 0
+val llmotivateStringFogPrefixes = rotateLlmotivatePrefixes(
+    loadLlmotivateStringFogPrefixes(llmotivateStringFogPrefixPool),
+    llmotivateStringFogPrefixIndex,
+)
+val llmotivateStringFogVisiblePrefix = if (llmotivateStringFogPrefixes.isEmpty()) {
+    "商业软件禁止逆向"
+} else {
+    llmotivateStringFogPrefixes.first()
+}
+
 val llmotivateOmvllEnabled = project.findBooleanPropertyOrDefault("llmotivateOmvllEnabled")
 val llmotivateOmvllPlugin = project.findStringPropertyOrDefault("llmotivateOmvllPlugin")
 val llmotivateOmvllConfig = project.findStringPropertyOrDefault("llmotivateOmvllConfig")
@@ -95,7 +149,8 @@ configure<StringFogExtension> {
     fogPackages = arrayOf("com.scottyab.rootbeer")
     kg = RandomKeyGenerator()
     mode = StringFogMode.visible
-    visiblePrefix = "商业软件禁止逆向"
+    visiblePrefix = llmotivateStringFogVisiblePrefix
+    visiblePrefixes = llmotivateStringFogPrefixes.toTypedArray()
     fogClassPackage = "o0O"
     fogClassName = "O00"
     generateFogClass = false
