@@ -1,7 +1,13 @@
+import com.github.megatronking.stringfog.plugin.StringFogExtension
+import com.github.megatronking.stringfog.plugin.StringFogMode
+import com.github.megatronking.stringfog.plugin.kg.RandomKeyGenerator
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
 }
+
+apply(plugin = "stringfog")
 
 android {
     namespace = "com.scottyab.rootbeer.sample"
@@ -52,6 +58,7 @@ dependencies {
     implementation(project(":rootbeerlib"))
     // used when testing the snapshot lib
     // implementation("com.scottyab:rootbeer-lib:0.1.1-SNAPSHOT")
+    implementation("com.github.megatronking.stringfog:xor:5.0.0-llm3")
 
     implementation(libs.kotlin.coroutines.core)
     implementation(libs.kotlin.coroutines.android)
@@ -65,4 +72,16 @@ dependencies {
     implementation(libs.beerprogressview)
 
     implementation(libs.timber)
+}
+
+configure<StringFogExtension> {
+    implementation = "com.github.megatronking.stringfog.xor.StringFogImpl"
+    enable = true
+    fogPackages = arrayOf("com.scottyab.rootbeer.sample")
+    kg = RandomKeyGenerator()
+    mode = StringFogMode.visible
+    visiblePrefix = "商业软件禁止逆向"
+    fogClassPackage = "o0O"
+    fogClassName = "O00"
+    generateFogClass = true
 }

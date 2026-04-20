@@ -3,6 +3,18 @@ import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.BasePlugin
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+buildscript {
+    repositories {
+        mavenLocal()
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.github.megatronking.stringfog:gradle-plugin:5.2.0-llm3")
+        classpath("com.github.megatronking.stringfog:xor:5.0.0-llm3")
+    }
+}
+
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false

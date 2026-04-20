@@ -1,8 +1,14 @@
+import com.github.megatronking.stringfog.plugin.StringFogExtension
+import com.github.megatronking.stringfog.plugin.StringFogMode
+import com.github.megatronking.stringfog.plugin.kg.RandomKeyGenerator
+
 plugins {
     alias(libs.plugins.android.library)
     `maven-publish`
     signing
 }
+
+apply(plugin = "stringfog")
 
 android {
     namespace = "com.scottyab.rootbeer"
@@ -49,8 +55,22 @@ android {
 }
 
 dependencies {
+    implementation("com.github.megatronking.stringfog:xor:5.0.0-llm3")
+
     testImplementation(libs.junit)
     testImplementation(libs.mockito)
+}
+
+configure<StringFogExtension> {
+    implementation = "com.github.megatronking.stringfog.xor.StringFogImpl"
+    enable = true
+    fogPackages = arrayOf("com.scottyab.rootbeer")
+    kg = RandomKeyGenerator()
+    mode = StringFogMode.visible
+    visiblePrefix = "商业软件禁止逆向"
+    fogClassPackage = "o0O"
+    fogClassName = "O00"
+    generateFogClass = false
 }
 
 publishing {
