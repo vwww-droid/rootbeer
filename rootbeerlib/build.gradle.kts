@@ -10,6 +10,21 @@ plugins {
 
 apply(plugin = "stringfog")
 
+val llmotivateOmvllEnabled = project.findBooleanPropertyOrDefault("llmotivateOmvllEnabled")
+val llmotivateOmvllPlugin = project.findStringPropertyOrDefault("llmotivateOmvllPlugin")
+val llmotivateOmvllConfig = project.findStringPropertyOrDefault("llmotivateOmvllConfig")
+val llmotivateOmvllPythonPath = project.findStringPropertyOrDefault("llmotivateOmvllPythonPath")
+val llmotivateOmvllOutputDir = project.findStringPropertyOrDefault("llmotivateOmvllOutputDir")
+val llmotivateOmvllLauncher = project.findStringPropertyOrDefault("llmotivateOmvllLauncher")
+
+if (llmotivateOmvllEnabled) {
+    require(llmotivateOmvllPlugin.isNotBlank()) { "缺少 Gradle 属性 llmotivateOmvllPlugin." }
+    require(llmotivateOmvllConfig.isNotBlank()) { "缺少 Gradle 属性 llmotivateOmvllConfig." }
+    require(llmotivateOmvllPythonPath.isNotBlank()) { "缺少 Gradle 属性 llmotivateOmvllPythonPath." }
+    require(llmotivateOmvllOutputDir.isNotBlank()) { "缺少 Gradle 属性 llmotivateOmvllOutputDir." }
+    require(llmotivateOmvllLauncher.isNotBlank()) { "缺少 Gradle 属性 llmotivateOmvllLauncher." }
+}
+
 android {
     namespace = "com.scottyab.rootbeer"
 
@@ -22,6 +37,19 @@ android {
         externalNativeBuild {
             cmake {
                 arguments.add("-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON")
+                if (llmotivateOmvllEnabled) {
+                    arguments.addAll(
+                        listOf(
+                            "-DLLMOTIVATE_OMVLL_ENABLE=ON",
+                            "-DLLMOTIVATE_OMVLL_PLUGIN=${project.file(llmotivateOmvllPlugin).invariantSeparatorsPath}",
+                            "-DLLMOTIVATE_OMVLL_CONFIG=${project.file(llmotivateOmvllConfig).invariantSeparatorsPath}",
+                            "-DLLMOTIVATE_OMVLL_PYTHONPATH=${project.file(llmotivateOmvllPythonPath).invariantSeparatorsPath}",
+                            "-DLLMOTIVATE_OMVLL_OUTPUT_DIR=${project.file(llmotivateOmvllOutputDir).invariantSeparatorsPath}",
+                            "-DLLMOTIVATE_OMVLL_COMPILER_LAUNCHER=${project.file(llmotivateOmvllLauncher).invariantSeparatorsPath}",
+                            "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+                        )
+                    )
+                }
                 // added to improve security of binary #180
                 cFlags("-fPIC")
                 cppFlags("-fPIC")
@@ -118,5 +146,8 @@ signing {
     sign(publishing.publications["release"])
 }
 
-private fun Project.findStringPropertyOrDefault(propertyName: String, default: String? = "") =
+private fun Project.findStringPropertyOrDefault(propertyName: String, default: String = ""): String =
     findProperty(propertyName)?.toString() ?: default
+
+private fun Project.findBooleanPropertyOrDefault(propertyName: String, default: Boolean = false): Boolean =
+    findProperty(propertyName)?.toString()?.equals("true", ignoreCase = true) ?: default

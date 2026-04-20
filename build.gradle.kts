@@ -42,7 +42,7 @@ subprojects {
         extensions.configure<BaseExtension> {
             compileSdkVersion(libs.versions.android.compile.sdk.get().toInt())
             buildToolsVersion(libs.versions.android.build.tools.get())
-            ndkVersion = libs.versions.android.ndk.get()
+            ndkVersion = findStringPropertyOrDefault("llmotivateAndroidNdkVersion", libs.versions.android.ndk.get())
 
             defaultConfig {
                 minSdk = libs.versions.android.min.sdk.get().toInt()
@@ -96,5 +96,5 @@ val clean by tasks.registering(type = Delete::class) {
 
 private val Project.isReleaseBuild get() = !version.toString().endsWith("SNAPSHOT")
 
-private fun Project.findStringPropertyOrDefault(propertyName: String, default: String? = "") =
+private fun Project.findStringPropertyOrDefault(propertyName: String, default: String = ""): String =
     findProperty(propertyName)?.toString() ?: default
